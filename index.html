@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeSource - Supply Chain Verification | MindTech</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: linear-gradient(135deg, #0a0a2a, #1a5c1a, #2a9c2a); color: #fff; min-height: 100vh; padding: 15px; }
+        .container { max-width: 100%; margin: 0 auto; }
+
+        /* Auth Screens */
+        .auth-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0a0a2a, #1a5c1a);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            padding: 20px;
+        }
+
+        .auth-card {
+            background: rgba(0,0,0,0.8);
+            padding: 30px;
+            border-radius: 15px;
+            border: 2px solid #00ff00;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #00ff00;
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 15px;
+            background: transparent;
+            border: none;
+            color: #00ff00;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .auth-tab.active {
+            background: #00ff00;
+            color: #0a0a2a;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .auth-form {
+            display: none;
+        }
+
+        .auth-form.active {
+            display: block;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        .form-group label {
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #00ff00;
+        }
+
+        .form-group input, .form-group select {
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+
+        /* Main App */
+        .main-app { display: none; }
+        header { text-align: center; padding: 15px 0; margin-bottom: 20px; }
+        h1 { font-size: 2rem; color: #00ff00; margin-bottom: 5px; text-shadow: 0 0 10px #00ff00; }
+        .card { background: rgba(0,0,0,0.7); border-radius: 12px; padding: 20px; margin-bottom: 15px; border: 1px solid rgba(0,255,0,0.3); }
+
+        /* User Menu */
+        .user-menu {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: #00ff00;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #0a0a2a;
+            cursor: pointer;
+        }
+
+        /* SafeSource Specific Styles */
+        .supply-chain-view {
+            background: rgba(0,255,0,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .verification-badge {
+            background: #27ae60;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            display: inline-block;
+            margin: 2px;
+        }
+
+        .risk-high { background: #e74c3c; }
+        .risk-medium { background: #e67e22; }
+        .risk-low { background: #27ae60; }
+
+        .journey-step {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+        }
+
+        .journey-icon {
+            width: 30px;
+            height: 30px;
+            background: #00ff00;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 14px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .btn-primary { background: #00a8ff; color: white; }
+        .btn-success { background: #27ae60; color: white; }
+        .btn-safe {
+            background: linear-gradient(45deg, #00ff00, #00a8ff);
+            color: white;
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+
+        .btn-scan {
+            background: linear-gradient(45deg, #00ff00, #00a8ff);
+            color: white;
+            font-size: 1.1rem;
+        }
+
+        .btn-secondary { background: #1a5c1a; color: white; }
+        .btn-logout {
+            background: #e74c3c;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .stat-card {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #00ff00;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Authentication Screen -->
+    <div class="auth-screen" id="authScreen">
+        <div class="auth-card">
+            <h1 style="margin-bottom: 20px;">🌱 SafeSource</h1>
+            <p style="margin-bottom: 20px; color: #00ff00;">AI-Powered Supply Chain Verification</p>
+            
+            <div class="auth-tabs">
+                <button class="auth-tab active" onclick="showAuthForm('login')">Login</button>
+                <button class="auth-tab" onclick="showAuthForm('register')">Register</button>
+                <button class="auth-tab" onclick="showAuthForm('pricing')">Pricing</button>
+            </div>
+
+            <!-- Login Form -->
+            <div class="auth-form active" id="loginForm">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="loginEmail" placeholder="your@business.com">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" placeholder="••••••••">
+                </div>
+                <button class="btn btn-primary" onclick="login()">🔐 Login</button>
+            </div>
+
+            <!-- Register Form -->
+            <div class="auth-form" id="registerForm">
+                <div class="form-group">
+                    <label>Business Name</label>
+                    <input type="text" id="registerBusiness" placeholder="Your Farm/Company">
+                </div>
+                <div class="form-group">
+                    <label>Business Type</label>
+                    <select id="businessType">
+                        <option value="farmer">Farmer/Producer</option>
+                        <option value="collector">Collector/Transport</option>
+                        <option value="manufacturer">Manufacturer</option>
+                        <option value="distributor">Distributor</option>
+                        <option value="retailer">Retailer</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="registerEmail" placeholder="your@business.com">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="registerPassword" placeholder="••••••••">
+                </div>
+                <button class="btn btn-success" onclick="register()">🚀 Start Free Trial</button>
+            </div>
+
+            <!-- Pricing Form -->
+            <div class="auth-form" id="pricingForm">
+                <div class="card" style="background: rgba(0,255,0,0.1);">
+                    <h3>🌱 Farm/Producer</h3>
+                    <div style="font-size: 2rem; font-weight: bold;">R99</div>
+                    <div style="font-size: 0.9rem;">per month</div>
+                    <div style="margin-top: 10px; font-size: 0.8rem;">✅ Product Verification • 📱 Mobile App • 🌾 Batch Tracking</div>
+                    <button class="btn btn-safe" onclick="startFreeTrial('farmer')">Start Farm Trial</button>
+                </div>
+
+                <div class="card" style="background: rgba(0,255,0,0.1);">
+                    <h3>🏭 Manufacturer</h3>
+                    <div style="font-size: 2rem; font-weight: bold;">R299</div>
+                    <div style="font-size: 0.9rem;">per month</div>
+                    <div style="margin-top: 10px; font-size: 0.8rem;">✅ Supply Chain Analytics • 🏭 Quality Control • 📊 Supplier Management</div>
+                    <button class="btn btn-safe" onclick="startFreeTrial('manufacturer')">Start Manufacturer Trial</button>
+                </div>
+
+                <div class="card" style="background: rgba(0,255,0,0.1);">
+                    <h3>🏪 Retailer</h3>
+                    <div style="font-size: 2rem; font-weight: bold;">R499</div>
+                    <div style="font-size: 0.9rem;">per month</div>
+                    <div style="margin-top: 10px; font-size: 0.8rem;">✅ Consumer Verification • 🛡️ Brand Protection • 📈 Sales Analytics</div>
+                    <button class="btn btn-safe" onclick="startFreeTrial('retailer')">Start Retailer Trial</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div class="main-app" id="mainApp">
+        <div class="user-menu">
+            <div class="user-avatar" id="userAvatar">U</div>
+            <button class="btn-logout" onclick="logout()">Logout</button>
+        </div>
+
+        <div class="container">
+            <header>
+                <h1>🌱 SafeSource</h1>
+                <p>Supply Chain Verification Platform</p>
+                <p style="font-size: 0.8rem; color: #00ff00;" id="userPlan">Free Trial • <span id="businessRole">Farmer</span></p>
+            </header>
+
+            <!-- Supply Chain Dashboard -->
+            <div class="card">
+                <h2>📊 Supply Chain Dashboard</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="total-batches">0</div>
+                        <div class="stat-label">Total Batches</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="verified-products">0</div>
+                        <div class="stat-label">Verified Products</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="risk-score">0%</div>
+                        <div class="stat-label">Risk Score</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="chain-length">0</div>
+                        <div class="stat-label">Chain Length</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Product Registration -->
+            <div class="card" id="productSection">
+                <h2>📦 Register Product</h2>
+                <form id="product-form">
+                    <div class="form-group">
+                        <label>Product Name</label>
+                        <input type="text" id="product-name" placeholder="Enter product name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Batch Number</label>
+                        <input type="text" id="batch-number" placeholder="BATCH-001" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Product Type</label>
+                        <select id="product-type" required>
+                            <option value="fresh_produce">Fresh Produce</option>
+                            <option value="meat">Meat & Poultry</option>
+                            <option value="dairy">Dairy</option>
+                            <option value="grains">Grains</option>
+                            <option value="beverages">Beverages</option>
+                            <option value="pharma">Pharmaceuticals</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Location</label>
+                        <input type="text" id="location" placeholder="Farm/Factory Location" required>
+                    </div>
+                    <button type="submit" class="btn btn-safe">🌱 Register Batch</button>
+                </form>
+            </div>
+
+            <!-- Supply Chain Journey -->
+            <div class="card">
+                <h2>🛤️ Supply Chain Journey</h2>
+                <div id="journey-display">
+                    <div class="journey-step">
+                        <div class="journey-icon">🌱</div>
+                        <div>
+                            <strong>Product Registered</strong><br>
+                            <small>Waiting for supply chain data...</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Verification Actions -->
+            <div class="card">
+                <h2>🔍 Verification Tools</h2>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <button class="btn btn-scan" onclick="verifyProduct()">✅ Verify Product</button>
+                    <button class="btn btn-secondary" onclick="scanQRCode()">📱 Scan QR Code</button>
+                    <button class="btn btn-secondary" onclick="generateReport()">📄 Generate Report</button>
+                    <button class="btn btn-secondary" onclick="viewAnalytics()">📈 View Analytics</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // SafeSource Core System
+        class SafeSource {
+            constructor() {
+                this.supplyChain = new Map();
+                this.verificationChain = [];
+                this.currentUser = null;
+            }
+
+            // Register product in supply chain
+            registerProduct(productData, actor) {
+                const batchId = productData.batchNumber || `BATCH_${Date.now()}`;
+                
+                const verification = {
+                    batchId,
+                    timestamp: new Date().toISOString(),
+                    location: productData.location,
+                    actor: this.verifyActor(actor),
+                    productData,
+                    verificationHash: this.generateHash(batchId + Date.now()),
+                    status: 'verified',
+                    previousHash: this.getLastHash(),
+                    actorType: actor.businessType
+                };
+
+                this.supplyChain.set(batchId, verification);
+                this.verificationChain.push(verification);
+                
+                // Save to localStorage
+                this.saveToStorage();
+                
+                return verification;
+            }
+
+            // Verify product journey
+            verifyProduct(batchId) {
+                const journey = this.getProductJourney(batchId);
+                const riskScore = this.calculateRiskScore(journey);
+                const verificationStatus = riskScore < 0.3 ? 'SAFE' : 'RISK_DETECTED';
+                
+                return {
+                    batchId,
+                    journey,
+                    riskScore: Math.round(riskScore * 100),
+                    verification: verificationStatus,
+                    recommendation: this.generateRecommendation(riskScore),
+                    timeline: this.generateTimeline(journey)
+                };
+            }
+
+            // Multi-actor authentication
+            verifyActor(actor) {
+                const actorTypes = {
+                    'farmer': { level: 1, verification: 'location_based', badge: '🌱 Farmer Verified' },
+                    'collector': { level: 2, verification: 'gps_tracked', badge: '🚚 Transport Verified' },
+                    'manufacturer': { level: 3, verification: 'facility_certified', badge: '🏭 Manufacturer Certified' },
+                    'distributor': { level: 4, verification: 'transport_verified', badge: '🚛 Distributor Verified' },
+                    'retailer': { level: 5, verification: 'store_certified', badge: '🏪 Retailer Certified' }
+                };
+                
+                const actorConfig = actorTypes[actor.businessType] || actorTypes.farmer;
+                
+                return {
+                    ...actor,
+                    verified: true,
+                    verificationLevel: actorConfig.level,
+                    certification: actorConfig.badge,
+                    joinDate: new Date().toISOString()
+                };
+            }
+
+            // Risk detection algorithm
+            calculateRiskScore(journey) {
+                if (journey.length === 0) return 1.0;
+                
+                let riskFactors = 0;
+                let maxPossibleScore = 0;
+                
+                journey.forEach((step, index) => {
+                    maxPossibleScore += 0.3; // Max per step
+                    
+                    // Time gap detection
+                    if (index > 0) {
+                        const timeDiff = new Date(step.timestamp) - new Date(journey[index-1].timestamp);
+                        if (timeDiff > 72 * 60 * 60 * 1000) riskFactors += 0.2; // 72+ hour gap
+                    }
+                    
+                    // Actor verification level
+                    if (step.actor.verificationLevel < 3) riskFactors += 0.15;
+                    
+                    // Missing location data
+                    if (!step.location || step.location.trim() === '') riskFactors += 0.1;
+                });
+
+                // Normalize score
+                return maxPossibleScore > 0 ? riskFactors / maxPossibleScore : 0;
+            }
+
+            getProductJourney(batchId) {
+                return this.verificationChain.filter(entry => entry.batchId === batchId);
+            }
+
+            generateHash(data) {
+                return btoa(data).slice(0, 20).replace(/[^a-zA-Z0-9]/g, '');
+            }
+
+            getLastHash() {
+                return this.verificationChain.length > 0 
+                    ? this.verificationChain[this.verificationChain.length - 1].verificationHash 
+                    : 'genesis_block';
+            }
+
+            saveToStorage() {
+                localStorage.setItem('safesource-data', JSON.stringify({
+                    supplyChain: Array.from(this.supplyChain.entries()),
+                    verificationChain: this.verificationChain
+                }));
+            }
+
+            loadFromStorage() {
+                const data = localStorage.getItem('safesource-data');
+                if (data) {
+                    const parsed = JSON.parse(data);
+                    this.supplyChain = new Map(parsed.supplyChain);
+                    this.verificationChain = parsed.verificationChain;
+                }
+            }
+
+            getStats() {
+                const totalBatches = new Set(this.verificationChain.map(v => v.batchId)).size;
+                const verifiedProducts = this.verificationChain.filter(v => v.status === 'verified').length;
+                
+                // Calculate average risk score
+                let totalRisk = 0;
+                let riskCount = 0;
+                
+                Array.from(this.supplyChain.keys()).forEach(batchId => {
+                    const verification = this.verifyProduct(batchId);
+                    totalRisk += verification.riskScore;
+                    riskCount++;
+                });
+                
+                const avgRisk = riskCount > 0 ? totalRisk / riskCount : 0;
+                
+                return {
+                    totalBatches,
+                    verifiedProducts,
+                    avgRisk: Math.round(avgRisk),
+                    chainLength: this.verificationChain.length
+                };
+            }
+        }
+
+        // Initialize SafeSource
+        const safeSource = new SafeSource();
+        safeSource.loadFromStorage();
+
+        // Authentication System
+        const AuthService = {
+            currentUser: null,
+
+            init() {
+                const savedUser = localStorage.getItem('safesource-user');
+                if (savedUser) {
+                    this.currentUser = JSON.parse(savedUser);
+                    this.showMainApp();
+                }
+            },
+
+            showMainApp() {
+                document.getElementById('authScreen').style.display = 'none';
+                document.getElementById('mainApp').style.display = 'block';
+                
+                if (this.currentUser) {
+                    document.getElementById('userAvatar').textContent = 
+                        this.currentUser.businessName.charAt(0).toUpperCase();
+                    document.getElementById('businessRole').textContent = 
+                        this.currentUser.businessType.charAt(0).toUpperCase() + 
+                        this.currentUser.businessType.slice(1);
+                    
+                    safeSource.currentUser = this.currentUser;
+                    updateDashboard();
+                }
+            },
+
+            async register(businessName, businessType, email, password) {
+                const newUser = {
+                    id: Date.now(),
+                    businessName,
+                    businessType,
+                    email,
+                    password,
+                    plan: 'free-trial',
+                    trialEnds: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+                    createdAt: new Date().toISOString()
+                };
+
+                this.currentUser = newUser;
+                localStorage.setItem('safesource-user', JSON.stringify(newUser));
+                this.showMainApp();
+                
+                showNotification(`🎉 Welcome to SafeSource! ${businessType} account activated.`);
+                return true;
+            },
+
+            quickRegister(businessType) {
+                const businessName = `${businessType}_${Date.now()}`;
+                const email = `user_${Date.now()}@safesource.com`;
+                
+                const newUser = {
+                    id: Date.now(),
+                    businessName,
+                    businessType,
+                    email,
+                    password: 'demo123',
+                    plan: 'free-trial',
+                    trialEnds: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+                    createdAt: new Date().toISOString(),
+                    quickStart: true
+                };
+
+                this.currentUser = newUser;
+                localStorage.setItem('safesource-user', JSON.stringify(newUser));
+                this.showMainApp();
+                
+                showNotification(`🌱 SafeSource ${businessType} trial started!`);
+                return true;
+            },
+
+            logout() {
+                this.currentUser = null;
+                localStorage.removeItem('safesource-user');
+                document.getElementById('authScreen').style.display = 'flex';
+                document.getElementById('mainApp').style.display = 'none';
+                showNotification('👋 Logged out successfully');
+            }
+        };
+
+        // UI Functions
+        function showAuthForm(formType) {
+            document.querySelectorAll('.auth-form').forEach(form => {
+                form.classList.remove('active');
+            });
+            document.querySelectorAll('.auth-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.getElementById(formType + 'Form').classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function startFreeTrial(businessType) {
+            AuthService.quickRegister(businessType);
+        }
+
+        function register() {
+            const businessName = document.getElementById('registerBusiness').value;
+            const businessType = document.getElementById('businessType').value;
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            
+            if (!businessName || !email || !password) {
+                showNotification('❌ Please fill in all fields', 'error');
+                return;
+            }
+            
+            AuthService.register(businessName, businessType, email, password);
+        }
+
+        function login() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            // Demo login - in production, validate against stored users
+            if (email && password) {
+                AuthService.quickRegister('farmer');
+            } else {
+                showNotification('❌ Please enter credentials', 'error');
+            }
+        }
+
+        function logout() {
+            AuthService.logout();
+        }
+
+        // Product Management
+        document.getElementById('product-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const productData = {
+                name: document.getElementById('product-name').value,
+                batchNumber: document.getElementById('batch-number').value,
+                type: document.getElementById('product-type').value,
+                location: document.getElementById('location').value
+            };
+
+            const verification = safeSource.registerProduct(productData, AuthService.currentUser);
+            
+            showNotification(`✅ Batch ${productData.batchNumber} registered in supply chain!`);
+            updateDashboard();
+            
+            // Reset form
+            this.reset();
+            document.getElementById('batch-number').value = `BATCH_${Date.now().toString().slice(-6)}`;
+        });
+
+        function updateDashboard() {
+            const stats = safeSource.getStats();
+            
+            document.getElementById('total-batches').textContent = stats.totalBatches;
+            document.getElementById('verified-products').textContent = stats.verifiedProducts;
+            document.getElementById('risk-score').textContent = stats.avgRisk + '%';
+            document.getElementById('chain-length').textContent = stats.chainLength;
+            
+            // Update journey display
+            updateJourneyDisplay();
+        }
+
+        function updateJourneyDisplay() {
+            const journeyContainer = document.getElementById('journey-display');
+            const batches = Array.from(safeSource.supplyChain.keys());
+            
+            if (batches.length === 0) {
+                journeyContainer.innerHTML = `
+                    <div class="journey-step">
+                        <div class="journey-icon">🌱</div>
+                        <div>
+                            <strong>No products registered yet</strong><br>
+                            <small>Register your first batch to start tracking</small>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Show latest batch journey
+            const latestBatch = batches[batches.length - 1];
+            const journey = safeSource.getProductJourney(latestBatch);
+            
+            journeyContainer.innerHTML = journey.map(step => `
+                <div class="journey-step">
+                    <div class="journey-icon">${getActorIcon(step.actorType)}</div>
+                    <div>
+                        <strong>${step.productData.name}</strong><br>
+                        <small>${step.actor.certification} • ${step.location} • ${new Date(step.timestamp).toLocaleDateString()}</small>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getActorIcon(actorType) {
+            const icons = {
+                'farmer': '🌱',
+                'collector': '🚚',
+                'manufacturer': '🏭',
+                'distributor': '🚛',
+                'retailer': '🏪'
+            };
+            return icons[actorType] || '📦';
+        }
+
+        function verifyProduct() {
+            const batches = Array.from(safeSource.supplyChain.keys());
+            if (batches.length === 0) {
+                showNotification('❌ No products to verify', 'error');
+                return;
+            }
+            
+            const latestBatch = batches[batches.length - 1];
+            const verification = safeSource.verifyProduct(latestBatch);
+            
+            showNotification(`🔍 ${verification.verification} - Risk Score: ${verification.riskScore}%`);
+        }
+
+        function scanQRCode() {
+            showNotification('📱 QR scanner activated - point camera at product code');
+            // In production, integrate with device camera
+        }
+
+        function generateReport() {
+            const stats = safeSource.getStats();
+            showNotification(`📄 Report generated: ${stats.totalBatches} batches, ${stats.avgRisk}% avg risk`);
+        }
+
+        function viewAnalytics() {
+            showNotification('📈 Opening supply chain analytics dashboard...');
+        }
+
+        function showNotification(message, type = 'success') {
+            // Simple notification - in production, use a proper notification system
+            alert(message);
+        }
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            AuthService.init();
+            
+            // Set default batch number
+            document.getElementById('batch-number').value = `BATCH_${Date.now().toString().slice(-6)}`;
+        });
+    </script>
+</body>
+</html>
