@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeSource - Supply Chain Verification</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#00ff00">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SafeSource">
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        @font-face {
+            font-family: 'Cyber';
+            src: url('data:application/font-woff2;base64,d09GMgABAAAAA') format('woff2');
+        }
+        
+        body { 
+            background: #000; 
+            color: #00ff00; 
+            font-family: 'Segoe UI', sans-serif;
+            overflow: hidden;
+        }
+        
+        /* SPLASH SCREENS */
+        .splash-screen {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: linear-gradient(135deg, #0a0a2a, #001a00, #003300);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+        
+        .splash-title {
+            font-family: 'Cyber', monospace;
+            font-size: 3.5rem;
+            font-weight: bold;
+            text-align: center;
+            animation: blink 2s infinite, glow 2s infinite;
+            text-shadow: 0 0 20px #00ff00, 0 0 40px #00ff00;
+        }
+        
+        .splash-subtitle {
+            font-size: 1.5rem;
+            margin-top: 20px;
+            animation: fadeInOut 4s infinite;
+            text-align: center;
+        }
+        
+        .powered-by {
+            position: absolute;
+            bottom: 30px;
+            font-size: 1rem;
+            opacity: 0.8;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+        
+        @keyframes glow {
+            0%, 100% { text-shadow: 0 0 20px #00ff00, 0 0 40px #00ff00; }
+            50% { text-shadow: 0 0 30px #00ff00, 0 0 60px #00ff00; }
+        }
+        
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 1; }
+        }
+        
+        /* MAIN APP STYLES */
+        .main-app { display: none; }
+        .container { max-width: 100%; padding: 15px; }
+        
+        .network-status-bar {
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            text-align: center;
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid #00ff00;
+        }
+        
+        .role-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .role-card {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .role-card.active {
+            border-color: #00ff00;
+            background: rgba(0,255,0,0.1);
+        }
+        
+        .role-icon { font-size: 2.5rem; margin-bottom: 10px; }
+        
+        .action-buttons {
+            display: grid;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, #00ff00, #00a8ff);
+            color: #000;
+        }
+        
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: #00ff00;
+            border: 1px solid #00ff00;
+        }
+        
+        .supply-chain-view {
+            background: rgba(0,255,0,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        
+        .journey-step {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+        }
+        
+        .journey-icon {
+            width: 30px;
+            height: 30px;
+            background: #00ff00;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            color: #000;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <!-- SPLASH SCREENS -->
+    <div class="splash-screen" id="splashSafeSource">
+        <div class="splash-title">SafeSource</div>
+        <div class="powered-by">powered by MindTech</div>
+    </div>
+    
+    <div class="splash-screen" id="splashSureToGo" style="display: none;">
+        <div class="splash-title">Sure to Go</div>
+        <div class="powered-by">powered by MindTech</div>
+    </div>
+    
+    <div class="splash-screen" id="splashMindTech" style="display: none;">
+        <div class="splash-title">powered by MindTech</div>
+        <div class="powered-by">Revolutionizing Supply Chains</div>
+    </div>
+
+    <!-- MAIN APPLICATION -->
+    <div class="main-app" id="mainApp">
+        <div class="container">
+            <!-- Network Status -->
+            <div class="network-status-bar" id="networkStatus">
+                🟢 Online - Real-time Sync Active
+            </div>
+            
+            <header style="text-align: center; margin-bottom: 30px;">
+                <h1 style="font-size: 2.5rem; margin-bottom: 10px;">🌱 SafeSource</h1>
+                <p>Supply Chain Verification Platform</p>
+                <div style="font-size: 0.9rem; margin-top: 5px; opacity: 0.8;">
+                    powered by MindTech
+                </div>
+            </header>
+            
+            <!-- Role Selection -->
+            <div class="role-selector">
+                <div class="role-card active" onclick="selectRole('farmer')">
+                    <div class="role-icon">🌱</div>
+                    <div>Farmer/Producer</div>
+                    <div style="font-size: 0.8rem; margin-top: 5px;">R99/month</div>
+                </div>
+                <div class="role-card" onclick="selectRole('manufacturer')">
+                    <div class="role-icon">🏭</div>
+                    <div>Manufacturer</div>
+                    <div style="font-size: 0.8rem; margin-top: 5px;">R299/month</div>
+                </div>
+                <div class="role-card" onclick="selectRole('retailer')">
+                    <div class="role-icon">🏪</div>
+                    <div>Retailer</div>
+                    <div style="font-size: 0.8rem; margin-top: 5px;">R499/month</div>
+                </div>
+                <div class="role-card" onclick="selectRole('consumer')">
+                    <div class="role-icon">📱</div>
+                    <div>Consumer</div>
+                    <div style="font-size: 0.8rem; margin-top: 5px;">FREE</div>
+                </div>
+            </div>
+            
+            <!-- Dynamic Content Based on Role -->
+            <div id="roleContent">
+                <!-- Content will be dynamically loaded based on selected role -->
+            </div>
+            
+            <!-- Supply Chain Journey Display -->
+            <div class="supply-chain-view" id="supplyChainView" style="display: none;">
+                <h3>🛤️ Supply Chain Journey</h3>
+                <div id="journeyDisplay">
+                    <!-- Journey steps will appear here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== SPLASH SCREEN SEQUENCE =====
+        let currentSplash = 0;
+        const splashScreens = ['splashSafeSource', 'splashSureToGo', 'splashMindTech'];
+        
+        function showSplash(index) {
+            // Hide all splash screens
+            splashScreens.forEach(screen => {
+                document.getElementById(screen).style.display = 'none';
+            });
+            
+            // Show current splash screen
+            document.getElementById(splashScreens[index]).style.display = 'flex';
+            
+            // Move to next splash or show main app
+            currentSplash++;
+            if (currentSplash < splashScreens.length) {
+                setTimeout(() => showSplash(currentSplash), 4000);
+            } else {
+                setTimeout(showMainApp, 4000);
+            }
+        }
+        
+        function showMainApp() {
+            document.getElementById('splashMindTech').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'block';
+            initializeApp();
+        }
+        
+        // Start splash sequence
+        setTimeout(() => showSplash(0), 100);
+        
+        // ===== NETWORK SYNC ENGINE =====
+        class SafeSourceNetwork {
+            constructor() {
+                this.supplyChainData = new Map();
+                this.connectedUsers = new Set();
+                this.syncQueue = [];
+                this.isOnline = navigator.onLine;
+                
+                // Network event listeners
+                window.addEventListener('online', () => this.handleOnline());
+                window.addEventListener('offline', () => this.handleOffline());
+                
+                // Real-time updates via BroadcastChannel (simulated)
+                this.setupRealtimeUpdates();
+            }
+            
+            setupRealtimeUpdates() {
+                // Simulate real-time updates across users
+                setInterval(() => {
+                    if (this.syncQueue.length > 0 && this.isOnline) {
+                        this.processSyncQueue();
+                    }
+                }, 2000);
+            }
+            
+            async addSupplyChainStep(stepData) {
+                const stepId = `step_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                const step = {
+                    id: stepId,
+                    ...stepData,
+                    timestamp: new Date().toISOString(),
+                    verified: true,
+                    networkStatus: this.isOnline ? 'synced' : 'queued'
+                };
+                
+                // Store locally
+                if (!this.supplyChainData.has(stepData.productId)) {
+                    this.supplyChainData.set(stepData.productId, []);
+                }
+                this.supplyChainData.get(stepData.productId).push(step);
+                
+                // Sync across network
+                if (this.isOnline) {
+                    await this.broadcastUpdate(step);
+                } else {
+                    this.syncQueue.push(step);
+                }
+                
+                return step;
+            }
+            
+            async broadcastUpdate(step) {
+                // Simulate real-time broadcast to all connected users
+                console.log('📡 Broadcasting update:', step);
+                
+                // Update UI for all users (in real app, this would be via WebSockets)
+                if (typeof updateAllUIs === 'function') {
+                    updateAllUIs(step);
+                }
+                
+                return true;
+            }
+            
+            handleOnline() {
+                this.isOnline = true;
+                document.getElementById('networkStatus').innerHTML = '🟢 Online - Real-time Sync Active';
+                document.getElementById('networkStatus').style.background = 'rgba(0, 255, 0, 0.1)';
+            }
+            
+            handleOffline() {
+                this.isOnline = false;
+                document.getElementById('networkStatus').innerHTML = '🔴 Offline - Local Storage Active';
+                document.getElementById('networkStatus').style.background = 'rgba(255, 0, 0, 0.1)';
+            }
+            
+            async processSyncQueue() {
+                while (this.syncQueue.length > 0) {
+                    const step = this.syncQueue.shift();
+                    await this.broadcastUpdate(step);
+                }
+            }
+            
+            getProductJourney(productId) {
+                return this.supplyChainData.get(productId) || [];
+            }
+        }
+        
+        // ===== APP INITIALIZATION =====
+        const network = new SafeSourceNetwork();
+        let currentRole = 'farmer';
+        
+        function initializeApp() {
+            loadRoleContent(currentRole);
+            setupNetworkMonitoring();
+        }
+        
+        function selectRole(role) {
+            currentRole = role;
+            
+            // Update UI
+            document.querySelectorAll('.role-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            loadRoleContent(role);
+        }
+        
+        function loadRoleContent(role) {
+            const contentDiv = document.getElementById('roleContent');
+            const chainView = document.getElementById('supplyChainView');
+            
+            switch(role) {
+                case 'farmer':
+                    contentDiv.innerHTML = `
+                        <div style="text-align: center;">
+                            <h2>🌱 Farmer Dashboard</h2>
+                            <p>Register your product batches</p>
+                            <div class="action-buttons">
+                                <button class="btn btn-primary" onclick="registerHarvest()">
+                                    📦 Register New Harvest
+                                </button>
+                                <button class="btn btn-secondary" onclick="generateQRCode()">
+                                    📄 Generate Product QR
+                                </button>
+                                <button class="btn btn-secondary" onclick="viewMyProducts()">
+                                    📊 View My Products
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    chainView.style.display = 'block';
+                    break;
+                    
+                case 'manufacturer':
+                    contentDiv.innerHTML = `
+                        <div style="text-align: center;">
+                            <h2>🏭 Manufacturer Dashboard</h2>
+                            <p>Process raw materials into products</p>
+                            <div class="action-buttons">
+                                <button class="btn btn-primary" onclick="receiveMaterials()">
+                                    📥 Receive Raw Materials
+                                </button>
+                                <button class="btn btn-secondary" onclick="processBatch()">
+                                    ⚙️ Process Production Batch
+                                </button>
+                                <button class="btn btn-secondary" onclick="shipToDistributor()">
+                                    🚚 Ship to Distributor
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    chainView.style.display = 'block';
+                    break;
+                    
+                case 'retailer':
+                    contentDiv.innerHTML = `
+                        <div style="text-align: center;">
+                            <h2>🏪 Retailer Dashboard</h2>
+                            <p>Sell verified products to consumers</p>
+                            <div class="action-buttons">
+                                <button class="btn btn-primary" onclick="receiveStock()">
+                                    📦 Receive Store Stock
+                                </button>
+                                <button class="btn btn-secondary" onclick="scanCustomerPurchase()">
+                                    💳 Scan Customer Purchase
+                                </button>
+                                <button class="btn btn-secondary" onclick="viewInventory()">
+                                    📈 View Inventory Analytics
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    chainView.style.display = 'block';
+                    break;
+                    
+                case 'consumer':
+                    contentDiv.innerHTML = `
+                        <div style="text-align: center;">
+                            <h2>📱 Consumer Verification</h2>
+                            <p>Scan products to verify authenticity</p>
+                            <div class="action-buttons">
+                                <button class="btn btn-primary" onclick="scanProduct()">
+                                    🔍 Scan Product QR Code
+                                </button>
+                                <button class="btn btn-secondary" onclick="viewVerificationHistory()">
+                                    📋 Verification History
+                                </button>
+                                <button class="btn btn-secondary" onclick="reportIssue()">
+                                    ⚠️ Report Suspicious Product
+                                </button>
+                            </div>
+                            <div style="margin-top: 20px; padding: 15px; background: rgba(0,255,0,0.1); border-radius: 10px;">
+                                <h3>🎯 FREE VERIFICATION</h3>
+                                <p>Scan any product QR code to verify authenticity and view its journey from farm to store!</p>
+                            </div>
+                        </div>
+                    `;
+                    chainView.style.display = 'block';
+                    break;
+            }
+            
+            updateJourneyDisplay();
+        }
+        
+        // ===== SUPPLY CHAIN ACTIONS =====
+        
+        // FARMER ACTIONS
+        async function registerHarvest() {
+            const productId = `PROD_${Date.now()}`;
+            const step = await network.addSupplyChainStep({
+                productId: productId,
+                role: 'farmer',
+                action: 'harvest_registered',
+                location: 'Sunrise Farms, Stellenbosch',
+                product: 'Organic Apples',
+                batch: `BATCH_${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+                quantity: '1000kg',
+                quality: 'Grade A'
+            });
+            
+            alert(`✅ Harvest registered! Batch: ${step.batch}\nProduct ID: ${productId}`);
+            updateJourneyDisplay();
+        }
+        
+        function generateQRCode() {
+            alert('📄 QR Code generated for product batch!\nShow this to collectors and manufacturers.');
+        }
+        
+        // MANUFACTURER ACTIONS  
+        async function receiveMaterials() {
+            const step = await network.addSupplyChainStep({
+                productId: 'PROD_123456',
+                role: 'manufacturer',
+                action: 'materials_received',
+                location: 'FreshPack Manufacturing, Johannesburg',
+                process: 'Quality Inspection',
+                status: 'Approved',
+                notes: 'Materials meet quality standards'
+            });
+            
+            alert('✅ Raw materials received and verified!');
+            updateJourneyDisplay();
+        }
+        
+        // RETAILER ACTIONS
+        async function receiveStock() {
+            const step = await network.addSupplyChainStep({
+                productId: 'PROD_123456',
+                role: 'retailer',
+                action: 'stock_received',
+                location: 'Boxer Stores, Cape Town',
+                status: 'Shelf Ready',
+                price: 'R45.99',
+                promotion: 'Weekly Special'
+            });
+            
+            alert('✅ Store stock received and priced!');
+            updateJourneyDisplay();
+        }
+        
+        // CONSUMER ACTIONS
+        async function scanProduct() {
+            // Simulate scanning a product
+            const verification = await verifyProduct('PROD_123456');
+            alert(`🔍 Product Verification Result:\n${verification}`);
+        }
+        
+        async function verifyProduct(productId) {
+            const journey = network.getProductJourney(productId);
+            if (journey.length === 0) {
+                return '❌ Product not found in SafeSource database';
+            }
+            
+            let verificationText = '✅ PRODUCT VERIFIED - SAFE TO USE\n\n';
+            verificationText += 'Supply Chain Journey:\n';
+            
+            journey.forEach(step => {
+                verificationText += `\n${getRoleIcon(step.role)} ${step.action} - ${step.location}\n`;
+            });
+            
+            verificationText += `\n🎯 Verification Score: 98.7%\n🛡️ SafeSource Certified`;
+            
+            return verificationText;
+        }
+        
+        function getRoleIcon(role) {
+            const icons = {
+                'farmer': '🌱',
+                'manufacturer': '🏭', 
+                'retailer': '🏪',
+                'consumer': '📱'
+            };
+            return icons[role] || '📦';
+        }
+        
+        // ===== JOURNEY DISPLAY =====
+        function updateJourneyDisplay() {
+            const journeyDiv = document.getElementById('journeyDisplay');
+            const journey = network.getProductJourney('PROD_123456');
+            
+            if (journey.length === 0) {
+                journeyDiv.innerHTML = `
+                    <div class="journey-step">
+                        <div class="journey-icon">🌱</div>
+                        <div>
+                            <strong>No products tracked yet</strong><br>
+                            <small>Register your first product to start the journey</small>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            journeyDiv.innerHTML = journey.map(step => `
+                <div class="journey-step">
+                    <div class="journey-icon">${getRoleIcon(step.role)}</div>
+                    <div>
+                        <strong>${step.action.replace('_', ' ').toUpperCase()}</strong><br>
+                        <small>${step.location} • ${new Date(step.timestamp).toLocaleTimeString()}</small>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function setupNetworkMonitoring() {
+            // Simulate real-time updates from other users
+            setInterval(() => {
+                if (Math.random() > 0.7) { // 30% chance of update
+                    const fakeUpdate = {
+                        productId: 'PROD_123456',
+                        role: ['farmer', 'manufacturer', 'retailer'][Math.floor(Math.random() * 3)],
+                        action: 'status_update',
+                        location: 'Various Locations',
+                        timestamp: new Date().toISOString()
+                    };
+                    network.addSupplyChainStep(fakeUpdate);
+                    updateJourneyDisplay();
+                }
+            }, 10000);
+        }
+        
+        // Global function for real-time UI updates
+        function updateAllUIs(step) {
+            updateJourneyDisplay();
+        }
+        
+        // PWA Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+                .then(registration => console.log('✅ SW registered:', registration))
+                .catch(error => console.log('❌ SW registration failed:', error));
+        }
+    </script>
+</body>
+</html>
