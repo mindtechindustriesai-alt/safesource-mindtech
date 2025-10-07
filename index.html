@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeSource - Main Platform</title>
+    <link rel="manifest" href="/manifest-main.json">
+    <meta name="theme-color" content="#00a8ff">
+    <link href="https://fonts.googleapis.com/css2?family=Exo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #000; color: #00a8ff; font-family: 'Exo', sans-serif; height: 100vh; overflow: hidden; }
+        
+        .startup-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 10000;
+        }
+        .startup-logo {
+            font-family: 'Exo', sans-serif; font-size: 4rem; font-weight: 800;
+            text-shadow: 0 0 20px #00a8ff, 0 0 40px #00a8ff; margin-bottom: 10px;
+        }
+        .startup-partner {
+            font-family: 'Exo', sans-serif; font-size: 1.5rem; font-weight: 600;
+            color: #00ff00; margin-bottom: 20px;
+        }
+        .loading-bar {
+            width: 250px; height: 6px; background: rgba(0, 168, 255, 0.2);
+            border-radius: 3px; margin-top: 20px; overflow: hidden;
+        }
+        .loading-progress {
+            height: 100%; background: #00a8ff; animation: loading 3s ease-in-out;
+        }
+        @keyframes loading { 0% { width: 0%; } 100% { width: 100%; } }
+
+        .main-app { display: none; height: 100vh; background: #000; }
+        .container { padding: 20px; height: 100%; display: flex; flex-direction: column; }
+        
+        .app-header { text-align: center; margin-bottom: 20px; }
+        .app-title { font-size: 2rem; font-weight: 800; text-shadow: 0 0 10px #00a8ff; }
+        
+        .dashboard {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;
+        }
+        .stat-card {
+            background: rgba(0, 168, 255, 0.1); border-radius: 15px; padding: 20px;
+            text-align: center; border: 2px solid #00a8ff;
+        }
+        .stat-number { font-size: 2rem; font-weight: 800; margin-bottom: 5px; }
+        .stat-label { font-size: 0.9rem; opacity: 0.8; }
+        
+        .network-section {
+            background: rgba(0, 255, 0, 0.1); border-radius: 15px; padding: 20px;
+            margin-bottom: 15px; border: 2px solid #00ff00;
+        }
+        .app-link {
+            display: block; background: rgba(255,255,255,0.1); padding: 15px;
+            border-radius: 10px; margin: 10px 0; text-decoration: none;
+            color: #00ff00; text-align: center; font-weight: 600;
+            border: 1px solid #00ff00;
+        }
+        
+        .brand-footer {
+            text-align: center; margin-top: auto; padding: 15px 0;
+            font-size: 0.8rem; opacity: 0.7; border-top: 1px solid rgba(0, 168, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="startup-screen" id="startupScreen">
+        <div class="startup-logo">SAFESOURCE</div>
+        <div class="startup-partner">Powered by SureToGo × MindTech</div>
+        <div class="loading-bar"><div class="loading-progress"></div></div>
+    </div>
+
+    <div class="main-app" id="mainApp">
+        <div class="container">
+            <div class="app-header">
+                <h1 class="app-title">SAFESOURCE MAIN PLATFORM</h1>
+                <p>Network Intelligence Dashboard</p>
+            </div>
+            
+            <div class="dashboard">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalVerifications">0</div>
+                    <div class="stat-label">Total Verifications</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="activeReports">0</div>
+                    <div class="stat-label">Active Reports</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="networkUsers">0</div>
+                    <div class="stat-label">Network Users</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="supplyChain">0</div>
+                    <div class="stat-label">Supply Chain Nodes</div>
+                </div>
+            </div>
+            
+            <div class="network-section">
+                <h3 style="text-align: center; margin-bottom: 15px;">🌐 NETWORK ECOSYSTEM</h3>
+                <a href="/consumer" class="app-link">📱 Consumer Verification App</a>
+                <a href="/manufacturer" class="app-link">🏭 Manufacturer Dashboard</a>
+                <a href="/farmer" class="app-link">🌱 Farmer Supply App</a>
+                <a href="/retailer" class="app-link">🏪 Retailer Portal</a>
+            </div>
+            
+            <div style="background: rgba(255,68,68,0.1); border-radius: 15px; padding: 15px; border: 2px solid #ff4444;">
+                <h4 style="color: #ff4444; text-align: center; margin-bottom: 10px;">🚨 RECENT REPORTS</h4>
+                <div id="reportsList" style="max-height: 150px; overflow-y: auto;">
+                    <!-- Reports will appear here -->
+                </div>
+            </div>
+            
+            <div class="brand-footer">
+                SafeSource Main Platform v3.0<br>
+                <small>Powered by SureToGo × MindTech</small>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        setTimeout(() => {
+            document.getElementById('startupScreen').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'block';
+            loadNetworkData();
+        }, 3000);
+
+        function loadNetworkData() {
+            // Load from shared network storage
+            const verifications = JSON.parse(localStorage.getItem('network_verifications')) || [];
+            const reports = JSON.parse(localStorage.getItem('network_reports')) || [];
+            
+            document.getElementById('totalVerifications').textContent = verifications.length;
+            document.getElementById('activeReports').textContent = reports.length;
+            document.getElementById('networkUsers').textContent = new Set(verifications.map(v => v.app)).size;
+            document.getElementById('supplyChain').textContent = '24'; // Mock data
+            
+            // Display recent reports
+            const reportsList = document.getElementById('reportsList');
+            reportsList.innerHTML = reports.slice(-5).map(report => `
+                <div style="background: rgba(255,255,255,0.05); padding: 8px; border-radius: 5px; margin: 5px 0; font-size: 0.8rem;">
+                    <strong>${report.app}</strong>: ${report.location}<br>
+                    <small>${new Date(report.timestamp).toLocaleTimeString()}</small>
+                </div>
+            `).join('');
+        }
+
+        // Sync across network every 5 seconds
+        setInterval(loadNetworkData, 5000);
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw-main.js');
+        }
+    </script>
+</body>
+</html>
