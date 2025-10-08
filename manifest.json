@@ -1,0 +1,77 @@
+{
+  "name": "SafeSource Consumer",
+  "short_name": "SafeSource",
+  "description": "FREE product verification & SARS reporting - Powered by SureToGo × MindTech",
+  "version": "3.2",
+  "start_url": "/consumer/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#00ff00",
+  "orientation": "portrait",
+  "scope": "/consumer/",
+  "categories": ["shopping", "lifestyle", "utilities"],
+  "icons": [
+    {
+      "src": "/icons/consumer-icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/consumer-icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/consumer-icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/consumer-scan.png",
+      "sizes": "375x812",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "QR Code Scanner"
+    },
+    {
+      "src": "/screenshots/consumer-verify.png",
+      "sizes": "375x812",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Product Verification"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Scan Product",
+      "short_name": "Scan",
+      "description": "Quick product verification",
+      "url": "/consumer/#scan",
+      "icons": [
+        {
+          "src": "/icons/scan-shortcut-96x96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "SARS Report",
+      "short_name": "SARS",
+      "description": "Report illicit trade",
+      "url": "/consumer/#sars",
+      "icons": [
+        {
+          "src": "/icons/sars-shortcut-96x96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeSource - Supply Chain Platform</title>
+    <link rel="manifest" href="/manifest-main.json">
+    <meta name="theme-color" content="#00a8ff">
+    <link href="https://fonts.googleapis.com/css2?family=Exo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            background: #000; 
+            color: #00a8ff; 
+            font-family: 'Exo', sans-serif; 
+            height: 100vh; 
+            overflow: hidden;
+        }
+
+        /* === 6-SECOND BRANDED STARTUP === */
+        .startup-screen {
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%;
+            background: #000; 
+            display: flex; 
+            flex-direction: column;
+            justify-content: center; 
+            align-items: center; 
+            z-index: 10000;
+        }
+        .startup-logo {
+            font-family: 'Exo', sans-serif; 
+            font-size: 4rem; 
+            font-weight: 800;
+            text-shadow: 0 0 20px #00a8ff, 0 0 40px #00a8ff; 
+            margin-bottom: 10px;
+            animation: pulse 2s infinite;
+        }
+        .startup-partner {
+            font-family: 'Exo', sans-serif; 
+            font-size: 1.5rem; 
+            font-weight: 600;
+            color: #00ff00; 
+            margin-bottom: 20px;
+            animation: fadeIn 3s ease-in;
+        }
+        .loading-bar {
+            width: 250px; 
+            height: 6px; 
+            background: rgba(0, 168, 255, 0.2);
+            border-radius: 3px; 
+            margin-top: 20px; 
+            overflow: hidden;
+        }
+        .loading-progress {
+            height: 100%; 
+            background: #00a8ff; 
+            animation: loading 6s ease-in-out;
+        }
+        @keyframes pulse { 
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.9; }
+        }
+        @keyframes fadeIn {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+        @keyframes loading { 
+            0% { width: 0%; }
+            100% { width: 100%; }
+        }
+
+        .main-app { 
+            display: none; 
+            height: 100vh; 
+            background: #000; 
+        }
+        .container { 
+            padding: 20px; 
+            height: 100%; 
+            display: flex; 
+            flex-direction: column; 
+        }
+
+        .app-header { 
+            text-align: center; 
+            margin-bottom: 20px; 
+        }
+        .app-title { 
+            font-size: 2rem; 
+            font-weight: 800; 
+            text-shadow: 0 0 10px #00a8ff; 
+        }
+        .app-subtitle { 
+            font-size: 1rem; 
+            opacity: 0.8; 
+        }
+
+        /* === DASHBOARD GRID === */
+        .dashboard-grid {
+            display: grid; 
+            grid-template-columns: repeat(2, 1fr); 
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: rgba(0, 168, 255, 0.1); 
+            border-radius: 15px; 
+            padding: 20px;
+            text-align: center; 
+            border: 2px solid #00a8ff;
+        }
+        .stat-number { 
+            font-size: 2rem; 
+            font-weight: 800; 
+            margin-bottom: 5px; 
+        }
+        .stat-label { 
+            font-size: 0.9rem; 
+            opacity: 0.8; 
+        }
+
+        /* === NAVIGATION === */
+        .nav-tabs {
+            display: flex; 
+            justify-content: space-around; 
+            margin-bottom: 20px;
+            background: rgba(0, 168, 255, 0.1); 
+            border-radius: 50px; 
+            padding: 5px;
+            border: 2px solid rgba(0, 168, 255, 0.3);
+        }
+        .nav-tab {
+            flex: 1; 
+            padding: 12px; 
+            text-align: center; 
+            cursor: pointer;
+            border-radius: 50px; 
+            transition: all 0.3s; 
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .nav-tab.active {
+            background: #00a8ff; 
+            color: #000; 
+            font-weight: 800;
+            box-shadow: 0 0 15px rgba(0, 168, 255, 0.5);
+        }
+
+        /* === CONTENT SECTIONS === */
+        .tab-content { 
+            display: none; 
+            flex: 1; 
+            overflow-y: auto; 
+            padding-bottom: 10px;
+        }
+        .section { 
+            background: rgba(0, 168, 255, 0.1); 
+            border-radius: 15px; 
+            padding: 20px; 
+            margin-bottom: 15px; 
+            border: 2px solid #00a8ff;
+        }
+        .section h3 {
+            margin-bottom: 15px;
+            color: #00ff00;
+        }
+
+        /* === CHARTS === */
+        .chart-container { 
+            height: 200px; 
+            margin: 15px 0; 
+            background: rgba(255, 255, 255, 0.05); 
+            border-radius: 10px;
+            padding: 15px;
+        }
+
+        /* === DATA TABLES === */
+        .data-table {
+            width: 100%; 
+            border-collapse: collapse; 
+            margin: 10px 0;
+            font-size: 0.9rem;
+        }
+        .data-table th, .data-table td {
+            padding: 10px; 
+            text-align: left; 
+            border-bottom: 1px solid rgba(0, 168, 255, 0.3);
+        }
+        .data-table th { 
+            font-weight: 700; 
+            color: #00ff00; 
+        }
+
+        /* === CHAT SYSTEM === */
+        .chat-container {
+            height: 300px;
+            display: flex;
+            flex-direction: column;
+            border: 2px solid #00ff00;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            background: rgba(0, 255, 0, 0.05);
+        }
+        .chat-message {
+            margin-bottom: 10px;
+            padding: 8px;
+            border-radius: 8px;
+            background: rgba(0, 168, 255, 0.1);
+        }
+        .chat-message.high {
+            border-left: 4px solid #ff4444;
+        }
+        .chat-message.medium {
+            border-left: 4px solid #ffd700;
+        }
+        .message-header {
+            font-size: 0.8rem;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+        .chat-input {
+            display: flex;
+            padding: 10px;
+            background: rgba(0, 168, 255, 0.1);
+            border-top: 1px solid #00a8ff;
+        }
+        .chat-input select, .chat-input input {
+            flex: 1;
+            margin-right: 10px;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid #00a8ff;
+            border-radius: 5px;
+            color: #fff;
+        }
+
+        /* === JOURNEY TIMELINE === */
+        .journey-timeline {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .timeline-event {
+            padding: 10px;
+            margin-bottom: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            border-left: 4px solid #00ff00;
+        }
+        .timeline-event.delay {
+            border-left-color: #ff4444;
+        }
+        .timeline-event.alert {
+            border-left-color: #ffd700;
+        }
+
+        /* === BUTTONS === */
+        .btn {
+            background: linear-gradient(45deg, #00a8ff, #00ff00); 
+            color: #000;
+            border: none; 
+            padding: 10px 15px; 
+            border-radius: 10px;
+            font-family: 'Exo', sans-serif; 
+            font-weight: 700; 
+            cursor: pointer;
+            margin: 5px; 
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 168, 255, 0.4);
+        }
+        .btn-danger {
+            background: linear-gradient(45deg, #ff4444, #ff0080); 
+            color: #fff;
+        }
+        .btn-success {
+            background: linear-gradient(45deg, #00ff00, #00a8ff); 
+            color: #000;
+        }
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+        }
+
+        .brand-footer {
+            text-align: center; 
+            margin-top: auto; 
+            padding: 15px 0;
+            font-size: 0.8rem; 
+            opacity: 0.7; 
+            border-top: 1px solid rgba(0, 168, 255, 0.2);
+        }
+
+        /* === EVIDENCE CAPTURE === */
+        .evidence-capture {
+            margin: 15px 0;
+        }
+        .evidence-options {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
+            flex-wrap: wrap;
+        }
+        #evidencePreview {
+            margin-top: 10px;
+            min-height: 100px;
+            border: 1px dashed #00a8ff;
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+        /* === MODALS === */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: #000;
+            padding: 30px;
+            border-radius: 15px;
+            border: 2px solid #00a8ff;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <!-- 6-SECOND BRANDED STARTUP -->
+    <div class="startup-screen" id="startupScreen">
+        <div class="startup-logo">SAFESOURCE</div>
+        <div class="startup-partner">Powered by SureToGo × MindTech</div>
+        <div class="loading-bar"><div class="loading-progress"></div></div>
+    </div>
+
+    <!-- MAIN APPLICATION -->
+    <div class="main-app" id="mainApp">
+        <div class="container">
+            <div class="app-header">
+                <h1 class="app-title">SAFESOURCE PLATFORM</h1>
+                <p class="app-subtitle">Supply Chain Intelligence Dashboard</p>
+            </div>
+
+            <!-- REAL-TIME STATS DASHBOARD -->
+            <div class="dashboard-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalProducts">0</div>
+                    <div class="stat-label">Products Tracked</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="activeAlerts">0</div>
+                    <div class="stat-label">Active Alerts</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="sarsReports">0</div>
+                    <div class="stat-label">SARS Reports</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="supplyNodes">4</div>
+                    <div class="stat-label">Supply Nodes</div>
+                </div>
+            </div>
+
+            <!-- NAVIGATION -->
+            <div class="nav-tabs">
+                <div class="nav-tab active" onclick="showTab('dashboard')">📊 Dashboard</div>
+                <div class="nav-tab" onclick="showTab('products')">📦 Products</div>
+                <div class="nav-tab" onclick="showTab('communication')">💬 Comm</div>
+                <div class="nav-tab" onclick="showTab('journey')">🛤️ Journey</div>
+                <div class="nav-tab" onclick="showTab('sars')">🚨 SARS Intel</div>
+            </div>
+
+            <!-- DASHBOARD TAB -->
+            <div id="dashboardTab" class="tab-content">
+                <div class="section">
+                    <h3>📈 VERIFICATION TRENDS</h3>
+                    <div class="chart-container">
+                        <canvas id="verificationChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>🔔 RECENT ACTIVITY</h3>
+                    <div id="recentActivity">
+                        <!-- Activity will be populated here -->
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>🌐 NETWORK HEALTH</h3>
+                    <div class="dashboard-grid">
+                        <div class="stat-card">
+                            <div class="stat-number" id="uptime">99.95%</div>
+                            <div class="stat-label">System Uptime</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="accuracy">98.7%</div>
+                            <div class="stat-label">Verification Accuracy</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PRODUCTS TAB -->
+            <div id="productsTab" class="tab-content" style="display: none;">
+                <div class="section">
+                    <h3>📦 PRODUCT MANAGEMENT</h3>
+                    <button class="btn" onclick="showProductModal()">+ Add Product Batch</button>
+                    <button class="btn btn-success" onclick="generateQRCodes()">📄 Generate QR Codes</button>
+                    
+                    <div style="margin-top: 15px;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Product ID</th>
+                                    <th>Name</th>
+                                    <th>Status</th>
+                                    <th>Last Scan</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productsTable">
+                                <!-- Products will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- COMMUNICATION TAB -->
+            <div id="communicationTab" class="tab-content" style="display: none;">
+                <div class="section">
+                    <h3>💬 SUPPLY CHAIN COMMUNICATION</h3>
+                    <div class="chat-container">
+                        <div class="chat-messages" id="chatMessages">
+                            <!-- Messages will appear here -->
+                        </div>
+                        <div class="chat-input">
+                            <select id="chatRecipient">
+                                <option value="all">All Supply Chain</option>
+                                <option value="farmers">Farmers Only</option>
+                                <option value="manufacturers">Manufacturers Only</option>
+                                <option value="retailers">Retailers Only</option>
+                                <option value="logistics">Logistics Only</option>
+                            </select>
+                            <select id="chatPriority">
+                                <option value="normal">Normal</option>
+                                <option value="high">High Priority</option>
+                                <option value="critical">Critical</option>
+                            </select>
+                            <input type="text" id="chatMessage" placeholder="Type message...">
+                            <button class="btn btn-small" onclick="sendSupplyChainMessage()">Send</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>📸 EVIDENCE CAPTURE</h3>
+                    <div class="evidence-capture">
+                        <div class="evidence-options">
+                            <button class="btn btn-small" onclick="capturePhoto()">📷 Take Photo</button>
+                            <button class="btn btn-small" onclick="captureSignature()">✍️ Get Signature</button>
+                            <button class="btn btn-small" onclick="addDelayReport()">⏰ Report Delay</button>
+                            <button class="btn btn-small" onclick="addQualityCheck()">✅ Quality Check</button>
+                        </div>
+                        <div id="evidencePreview">
+                            <p style="text-align: center; opacity: 0.7; padding: 20px;">No evidence captured yet</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- JOURNEY TRACKING TAB -->
+            <div id="journeyTab" class="tab-content" style="display: none;">
+                <div class="section">
+                    <h3>🛤️ PRODUCT JOURNEY VISUALIZER</h3>
+                    <select id="productSelector" onchange="loadProductJourney()" style="width: 100%; padding: 10px; margin-bottom: 15px; background: rgba(255,255,255,0.1); border: 2px solid #00a8ff; border-radius: 8px; color: #fff;">
+                        <option value="">Select Product to View Journey</option>
+                    </select>
+                    <div class="journey-timeline" id="journeyTimeline">
+                        <!-- Timeline will be generated here -->
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>📊 JOURNEY ANALYTICS</h3>
+                    <div class="dashboard-grid">
+                        <div class="stat-card">
+                            <div class="stat-number" id="journeyDuration">--</div>
+                            <div class="stat-label">Avg Journey Time</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="journeyIssues">--</div>
+                            <div class="stat-label">Issues Detected</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="complianceScore">--</div>
+                            <div class="stat-label">Compliance Score</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="blockchainBlocks">0</div>
+                            <div class="stat-label">Blockchain Blocks</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SARS INTELLIGENCE TAB -->
+            <div id="sarsTab" class="tab-content" style="display: none;">
+                <div class="section">
+                    <h3>🚨 SARS INTELLIGENCE DASHBOARD</h3>
+                    <div class="dashboard-grid">
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalSARSReports">0</div>
+                            <div class="stat-label">Total Reports</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="highRiskStores">0</div>
+                            <div class="stat-label">High-Risk Stores</div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 15px;">
+                        <h4>Recent SARS Reports</h4>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Store</th>
+                                    <th>Product</th>
+                                    <th>Value</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sarsReportsTable">
+                                <!-- SARS reports will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <button class="btn btn-danger" onclick="exportSARSData()">📤 Export SARS Data</button>
+                    <button class="btn" onclick="generateSARSReport()">📊 Generate SARS Report</button>
+                </div>
+            </div>
+
+            <div class="brand-footer">
+                SafeSource Platform v3.2 - Complete Supply Chain Ecosystem<br>
+                <small>Powered by SureToGo × MindTech | R800M Valuation Ready</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- PRODUCT MODAL -->
+    <div id="productModal" class="modal">
+        <div class="modal-content">
+            <h3>Add Product Batch</h3>
+            <div style="margin: 15px 0;">
+                <input type="text" id="productName" placeholder="Product Name" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 2px solid #00a8ff; border-radius: 8px; color: #fff; margin: 5px 0;">
+                <input type="text" id="productBrand" placeholder="Brand" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 2px solid #00a8ff; border-radius: 8px; color: #fff; margin: 5px 0;">
+                <input type="number" id="productQuantity" placeholder="Quantity" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 2px solid #00a8ff; border-radius: 8px; color: #fff; margin: 5px 0;">
+                <input type="text" id="productLocation" placeholder="Manufacturing Location" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 2px solid #00a8ff; border-radius: 8px; color: #fff; margin: 5px 0;">
+            </div>
+            <button class="btn" onclick="addProductBatch()">Add Product</button>
+            <button class="btn btn-danger" onclick="hideProductModal()">Cancel</button>
+        </div>
+    </div>
+
+    <!-- DELAY REPORT MODAL -->
+    <div id="delayModal" class="modal">
+        <div class="modal-content">
+            <h3>⏰ Report Supply Chain Delay</h3>
+            <div style="margin: 15px 0;">
+                <select id="delayProduct" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 2px solid #ffd700; border-radius: 8px; color: #fff; margin: 5px 0;">
+                    <option value="">Select Product</option>
+                </select>
+                <select id="delayStage" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 2px solid #ffd700; border-radius: 8px; color: #fff; margin: 5px 0;">
+                    <option value="farm_to_factory">Farm to Factory</option>
+                    <option value="factory_processing">Factory Processing</option>
+                    <option value="factory_to_retail">Factory to Retail</option>
+                    <option value="retail_shelf">Retail Shelf</option>
+                </select>
+                <input type="number" id="delayHours" placeholder="Delay in hours" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 2px solid #ffd700; border-radius: 8px; color: #fff; margin: 5px 0;">
+                <textarea id="delayReason" placeholder="Reason for delay" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 2px solid #ffd700; border-radius: 8px; color: #fff; margin: 5px 0; height: 80px;"></textarea>
+            </div>
+            <button class="btn" onclick="submitDelayReport()">Submit Delay Report</button>
+            <button class="btn btn-danger" onclick="hideDelayModal()">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        // ===== 6-SECOND STARTUP SEQUENCE =====
+        setTimeout(() => {
+            document.getElementById('startupScreen').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'block';
+            initializePlatform();
+        }, 6000);
+
+        // ===== CORE SYSTEMS INITIALIZATION =====
+        let supplyChainChat, journeyTracker, delayMonitor, blockchainLogger;
+
+        function initializePlatform() {
+            supplyChainChat = new SupplyChainChat();
+            journeyTracker = new JourneyTracker();
+            delayMonitor = new DelayMonitor();
+            blockchainLogger = new BlockchainLogger();
+            
+            loadDashboardData();
+            initializeCharts();
+            startRealTimeUpdates();
+            autoLogEvents();
+            
+            // Send welcome message
+            setTimeout(() => {
+                supplyChainChat.sendMessage(
+                    "🚀 SafeSource Platform Online! All systems operational. Ready for R800M deployment!",
+                    "all",
+                    "high"
+                );
+            }, 1000);
+        }
+
+        // ===== SUPPLY CHAIN CHAT SYSTEM =====
+        class SupplyChainChat {
+            constructor() {
+                this.messages = JSON.parse(localStorage.getItem('supply-chain-chat')) || [];
+                this.loadChatHistory();
+            }
+
+            sendMessage(message, recipient = 'all', priority = 'normal') {
+                const chatMessage = {
+                    id: Date.now(),
+                    sender: 'Platform Admin',
+                    recipient: recipient,
+                    message: message,
+                    priority: priority,
+                    timestamp: new Date().toISOString(),
+                    read: false
+                };
+
+                this.messages.unshift(chatMessage);
+                this.saveMessages();
+                this.updateChatDisplay();
+                
+                // Auto-log to journey tracking
+                journeyTracker.logEvent('SYSTEM', 'chat_message', chatMessage);
+                
+                // Auto-broadcast to relevant parties
+                this.broadcastAlert(chatMessage);
+            }
+
+            loadChatHistory() {
+                this.updateChatDisplay();
+            }
+
+            updateChatDisplay() {
+                const chatContainer = document.getElementById('chatMessages');
+                const messages = this.messages.slice(0, 50);
+                
+                chatContainer.innerHTML = messages.map(msg => `
+                    <div class="chat-message ${msg.priority}">
+                        <div class="message-header">
+                            <strong>${msg.sender}</strong> 
+                            <span class="recipient">→ ${msg.recipient}</span>
+                            <span class="time">${new Date(msg.timestamp).toLocaleTimeString()}</span>
+                        </div>
+                        <div class="message-content">${msg.message}</div>
+                        ${msg.priority !== 'normal' ? `<span class="priority-badge">${msg.priority.toUpperCase()}</span>` : ''}
+                    </div>
+                `).join('');
+                
+                chatContainer.scrollTop = 0;
+            }
+
+            broadcastAlert(message) {
+                // Simulate real-time alert to relevant supply chain members
+                console.log(`📢 Broadcasting to ${message.recipient}: ${message.message}`);
+            }
+
+            saveMessages() {
+                localStorage.setItem('supply-chain-chat', JSON.stringify(this.messages));
+            }
+        }
+
+        // ===== JOURNEY TRACKING SYSTEM =====
+        class JourneyTracker {
+            constructor() {
+                this.journeyLog = JSON.parse(localStorage.getItem('supply-chain-journey')) || [];
+                this.initializeSampleData();
+            }
+
+            initializeSampleData() {
+                if (this.journeyLog.length === 0) {
+                    // Add sample journey events
+                    this.logEvent('PROD_001', 'manufacturing_start', {
+                        location: 'Sunrise Farms',
+                        quantity: 1000,
+                        product: 'Organic Apples'
+                    });
+                    
+                    this.logEvent('PROD_001', 'quality_check', {
+                        result: 'passed',
+                        inspector: 'Quality Team A',
+                        notes: 'Excellent quality'
+                    });
+                }
+            }
+
+            async logEvent(productId, eventType, data) {
+                const journeyEvent = {
+                    eventId: `EVENT_${Date.now()}`,
+                    productId: productId,
+                    eventType: eventType,
+                    timestamp: new Date().toISOString(),
+                    location: await this.getCurrentLocation(),
+                    user: 'System Admin',
+                    data: data
+                };
+
+                this.journeyLog.unshift(journeyEvent);
+                this.saveJourney();
+                
+                // Also log to blockchain for immutability
+                blockchainLogger.logToBlockchain(journeyEvent);
+                
+                // Check for delays
+                delayMonitor.checkForDelays(productId);
+                
+                return journeyEvent;
+            }
+
+            async getCurrentLocation() {
+                return new Promise((resolve) => {
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(
+                            position => resolve({
+                                lat: position.coords.latitude.toFixed(6),
+                                lng: position.coords.longitude.toFixed(6),
+                                accuracy: position.coords.accuracy
+                            }),
+                            () => resolve({ lat: null, lng: null, accuracy: null })
+                        );
+                    } else {
+                        resolve({ lat: null, lng: null, accuracy: null });
+                    }
+                });
+            }
+
+            getProductJourney(productId) {
+                return this.journeyLog.filter(event => event.productId === productId);
+            }
+
+            saveJourney() {
+                localStorage.setItem('supply-chain-journey', JSON.stringify(this.journeyLog));
+            }
+
+            generateJourneyReport(productId) {
+                const productJourney = this.getProductJourney(productId);
+                const issues = productJourney.filter(event => 
+                    event.eventType.includes('delay') || event.eventType.includes('issue')
+                ).length;
+
+                return {
+                    productId: productId,
+                    totalEvents: productJourney.length,
+                    issues: issues,
+                    compliance: Math.max(0, 100 - (issues * 10)),
+                    timeline: productJourney
+                };
+            }
+        }
+
+        // ===== DELAY MONITORING SYSTEM =====
+        class DelayMonitor {
+            constructor() {
+                this.slaThresholds = {
+                    farm_to_factory: 24,
+                    factory_processing: 48,
+                    factory_to_retail: 72,
+                    retail_shelf: 2
+                };
+            }
+
+            checkForDelays(productId) {
+                const journey = journeyTracker.getProductJourney(productId);
+                // Simplified delay checking - in production would compare timestamps
+                if (journey.length > 3 && Math.random() > 0.7) {
+                    this.triggerDelayAlert(productId, 'factory_processing', 48, 72);
+                }
+            }
+
+            triggerDelayAlert(productId, stage, expected, actual) {
+                const delayMessage = {
+                    type: 'delay_alert',
+                    productId: productId,
+                    stage: stage,
+                    expectedHours: expected,
+                    actualHours: actual,
+                    delayHours: actual - expected,
+                    severity: this.calculateSeverity(actual - expected),
+                    timestamp: new Date().toISOString()
+                };
+
+                // Send to chat system
+                supplyChainChat.sendMessage(
+                    `🚨 DELAY ALERT: Product ${productId} at ${stage} stage. ${actual - expected}h overdue. Expected: ${expected}h, Actual: ${actual}h`,
+                    'logistics',
+                    'high'
+                );
+
+                // Log to journey
+                journeyTracker.logEvent(productId, 'delay', delayMessage);
+            }
+
+            calculateSeverity(delayHours) {
+                if (delayHours > 24) return 'critical';
+                if (delayHours > 12) return 'high';
+                if (delayHours > 6) return 'medium';
+                return 'low';
+            }
+        }
+
+        // ===== BLOCKCHAIN LOGGING SYSTEM =====
+        class BlockchainLogger {
+            constructor() {
+                this.chain = JSON.parse(localStorage.getItem('blockchain-ledger')) || [this.createGenesisBlock()];
+                document.getElementById('blockchainBlocks').textContent = this.chain.length;
+            }
+
+            createGenesisBlock() {
+                return {
+                    index: 0,
+                    timestamp: new Date().toISOString(),
+                    data: { type: 'genesis', message: 'SafeSource Supply Chain Genesis Block' },
+                    previousHash: '0',
+                    hash: this.calculateHash(0, new Date().toISOString(), { type: 'genesis' }, '0')
+                };
+            }
+
+            addBlock(journeyEvent) {
+                const previousBlock = this.chain[this.chain.length - 1];
+                const newBlock = {
+                    index: previousBlock.index + 1,
+                    timestamp: new Date().toISOString(),
+                    data: journeyEvent,
+                    previousHash: previousBlock.hash,
+                    hash: this.calculateHash(previousBlock.index + 1, new Date().toISOString(), journeyEvent, previousBlock.hash)
+                };
+
+                this.chain.push(newBlock);
+                this.saveChain();
+                document.getElementById('blockchainBlocks').textContent = this.chain.length;
+                
+                return newBlock;
+            }
+
+            calculateHash(index, timestamp, data, previousHash) {
+                return CryptoJS.SHA256(index + timestamp + JSON.stringify(data) + previousHash).toString();
+            }
+
+            logToBlockchain(journeyEvent) {
+                return this.addBlock(journeyEvent);
+            }
+
+            saveChain() {
+                localStorage.setItem('blockchain-ledger', JSON.stringify(this.chain));
+            }
+        }
+
+        // ===== EVIDENCE CAPTURE SYSTEM =====
+        async function capturePhoto() {
+            // Simulate photo capture
+            const evidence = {
+                type: 'photo',
+                timestamp: new Date().toISOString(),
+                data: 'simulated_photo_data'
+            };
+            
+            document.getElementById('evidencePreview').innerHTML = `
+                <div style="text-align: center; padding: 10px;">
+                    <div style="font-size: 3rem;">📷</div>
+                    <p>Photo captured successfully!</p>
+                    <small>${new Date().toLocaleString()}</small>
+                </div>
+            `;
+            
+            supplyChainChat.sendMessage(
+                "📷 Evidence photo captured and logged",
+                "all",
+                "normal"
+            );
+            
+            journeyTracker.logEvent('EVIDENCE', 'photo_capture', evidence);
+        }
+
+        async function captureSignature() {
+            // Simulate signature capture
+            document.getElementById('evidencePreview').innerHTML = `
+                <div style="text-align: center; padding: 10px;">
+                    <div style="font-size: 3rem;">✍️</div>
+                    <p>Digital signature captured!</p>
+                    <small>${new Date().toLocaleString()}</small>
+                </div>
+            `;
+            
+            supplyChainChat.sendMessage(
+                "✍️ Digital signature captured for verification",
+                "quality",
+                "normal"
+            );
+        }
+
+        // ===== UI MANAGEMENT FUNCTIONS =====
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.style.display = 'none';
+            });
+            
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.getElementById(tabName + 'Tab').style.display = 'block';
+            event.target.classList.add('active');
+            
+            if (tabName === 'dashboard') loadDashboardData();
+            if (tabName === 'products') updateProductsTable();
+            if (tabName === 'journey') loadJourneyData();
+            if (tabName === 'sars') updateSARSReportsTable();
+        }
+
+        function sendSupplyChainMessage() {
+            const message = document.getElementById('chatMessage').value;
+            const recipient = document.getElementById('chatRecipient').value;
+            const priority = document.getElementById('chatPriority').value;
+            
+            if (message.trim()) {
+                supplyChainChat.sendMessage(message, recipient, priority);
+                document.getElementById('chatMessage').value = '';
+            }
+        }
+
+        // ===== PRODUCT MANAGEMENT =====
+        function showProductModal() {
+            document.getElementById('productModal').style.display = 'flex';
+        }
+
+        function hideProductModal() {
+            document.getElementById('productModal').style.display = 'none';
+        }
+
+        function addProductBatch() {
+            const productData = {
+                id: 'PROD_' + Date.now(),
+                name: document.getElementById('productName').value,
+                brand: document.getElementById('productBrand').value,
+                quantity: document.getElementById('productQuantity').value,
+                location: document.getElementById('productLocation').value,
+                timestamp: new Date().toISOString(),
+                status: 'active'
+            };
+
+            if (!productData.name || !productData.brand) {
+                alert('Please fill in product name and brand');
+                return;
+            }
+
+            const products = JSON.parse(localStorage.getItem('platform-products')) || [];
+            products.push(productData);
+            localStorage.setItem('platform-products', JSON.stringify(products));
+
+            // Log the event
+            journeyTracker.logEvent(productData.id, 'product_created', productData);
+            
+            // Send notification
+            supplyChainChat.sendMessage(
+                `📦 New product batch created: ${productData.name} (${productData.quantity} units)`,
+                "all",
+                "normal"
+            );
+
+            hideProductModal();
+            updateProductsTable();
+            loadDashboardData();
+        }
+
+        function updateProductsTable() {
+            const products = JSON.parse(localStorage.getItem('platform-products')) || [];
+            const table = document.getElementById('productsTable');
+            const selector = document.getElementById('productSelector');
+            
+            selector.innerHTML = '<option value="">Select Product to View Journey</option>';
+            
+            if (products.length === 0) {
+                table.innerHTML = '<tr><td colspan="5" style="text-align: center; opacity: 0.7;">No products added yet</td></tr>';
+                return;
+            }
+
+            table.innerHTML = products.map(product => `
+                <tr>
+                    <td>${product.id}</td>
+                    <td>${product.name}</td>
+                    <td><span style="color: #00ff00;">${product.status}</span></td>
+                    <td>${new Date(product.timestamp).toLocaleDateString()}</td>
+                    <td>
+                        <button class="btn btn-small" onclick="viewProduct('${product.id}')">View</button>
+                        <button class="btn btn-small btn-danger" onclick="deleteProduct('${product.id}')">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+
+            // Also update product selector
+            products.forEach(product => {
+                selector.innerHTML += `<option value="${product.id}">${product.name} (${product.id})</option>`;
+            });
+        }
+
+        function loadJourneyData() {
+            const selectedProduct = document.getElementById('productSelector').value;
+            const timeline = document.getElementById('journeyTimeline');
+            
+            if (!selectedProduct) {
+                timeline.innerHTML = '<p style="text-align: center; opacity: 0.7; padding: 20px;">Select a product to view its journey</p>';
+                return;
+            }
+
+            const journey = journeyTracker.getProductJourney(selectedProduct);
+            
+            if (journey.length === 0) {
+                timeline.innerHTML = '<p style="text-align: center; opacity: 0.7; padding: 20px;">No journey data available for this product</p>';
+                return;
+            }
+
+            timeline.innerHTML = journey.map(event => `
+                <div class="timeline-event ${event.eventType.includes('delay') ? 'delay' : ''}">
+                    <strong>${event.eventType.replace(/_/g, ' ').toUpperCase()}</strong>
+                    <div style="font-size: 0.8rem; opacity: 0.8;">
+                        ${new Date(event.timestamp).toLocaleString()}
+                        ${event.location.lat ? ` | Location: ${event.location.lat}, ${event.location.lng}` : ''}
+                    </div>
+                    ${event.data ? `<div style="font-size: 0.8rem; margin-top: 5px;">${JSON.stringify(event.data)}</div>` : ''}
+                </div>
+            `).join('');
+
+            // Update analytics
+            const report = journeyTracker.generateJourneyReport(selectedProduct);
+            document.getElementById('journeyDuration').textContent = `${report.totalEvents} events`;
+            document.getElementById('journeyIssues').textContent = report.issues;
+            document.getElementById('complianceScore').textContent = `${report.compliance}%`;
+        }
+
+        // ===== DELAY REPORTING =====
+        function addDelayReport() {
+            const products = JSON.parse(localStorage.getItem('platform-products')) || [];
+            const productSelect = document.getElementById('delayProduct');
+            
+            productSelect.innerHTML = '<option value="">Select Product</option>';
+            products.forEach(product => {
+                productSelect.innerHTML += `<option value="${product.id}">${product.name}</option>`;
+            });
+            
+            document.getElementById('delayModal').style.display = 'flex';
+        }
+
+        function hideDelayModal() {
+            document.getElementById('delayModal').style.display = 'none';
+        }
+
+        function submitDelayReport() {
+            const productId = document.getElementById('delayProduct').value;
+            const stage = document.getElementById('delayStage').value;
+            const hours = document.getElementById('delayHours').value;
+            const reason = document.getElementById('delayReason').value;
+
+            if (!productId || !hours) {
+                alert('Please select a product and enter delay hours');
+                return;
+            }
+
+            const delayData = {
+                stage: stage,
+                delayHours: parseInt(hours),
+                reason: reason,
+                reportedBy: 'Platform Admin'
+            };
+
+            journeyTracker.logEvent(productId, 'delay_reported', delayData);
+            
+            supplyChainChat.sendMessage(
+                `⏰ Delay reported for ${productId} at ${stage} stage: ${hours} hours. Reason: ${reason}`,
+                "logistics",
+                "high"
+            );
+
+            hideDelayModal();
+            alert('Delay report submitted successfully!');
+        }
+
+        function addQualityCheck() {
+            const products = JSON.parse(localStorage.getItem('platform-products')) || [];
+            if (products.length === 0) {
+                alert('No products available for quality check');
+                return;
+            }
+
+            const randomProduct = products[Math.floor(Math.random() * products.length)];
+            const passed = Math.random() > 0.3; // 70% pass rate
+
+            journeyTracker.logEvent(randomProduct.id, 'quality_check', {
+                result: passed ? 'passed' : 'failed',
+                inspector: 'Automated System',
+                notes: passed ? 'Quality standards met' : 'Quality issues detected'
+            });
+
+            supplyChainChat.sendMessage(
+                `✅ Quality check ${passed ? 'PASSED' : 'FAILED'} for ${randomProduct.name}`,
+                "quality",
+                passed ? "normal" : "high"
+            );
+
+            document.getElementById('evidencePreview').innerHTML = `
+                <div style="text-align: center; padding: 10px;">
+                    <div style="font-size: 3rem;">${passed ? '✅' : '❌'}</div>
+                    <p>Quality check ${passed ? 'PASSED' : 'FAILED'}</p>
+                    <p><small>Product: ${randomProduct.name}</small></p>
+                </div>
+            `;
+        }
+
+        // ===== SARS REPORTING =====
+        function updateSARSReportsTable() {
+            const networkData = getNetworkData();
+            const table = document.getElementById('sarsReportsTable');
+            
+            if (networkData.sarsReports.length === 0) {
+                table.innerHTML = '<tr><td colspan="5" style="text-align: center; opacity: 0.7;">No SARS reports yet</td></tr>';
+                return;
+            }
+
+            table.innerHTML = networkData.sarsReports.slice(0, 10).map(report => `
+                <tr>
+                    <td>${report.store || 'Unknown Store'}</td>
+                    <td>${report.product || 'Unknown Product'}</td>
+                    <td>R${report.estimatedValue || 'N/A'}</td>
+                    <td>${new Date(report.timestamp).toLocaleDateString()}</td>
+                    <td><span style="color: #ff4444;">Pending</span></td>
+                </tr>
+            `).join('');
+        }
+
+        function exportSARSData() {
+            const networkData = getNetworkData();
+            alert(`📤 SARS Data Export Ready!\n\n${networkData.sarsReports.length} reports prepared for export to illicittrade@sars.gov.za\n\nIn production, this would generate a CSV file for submission.`);
+            
+            supplyChainChat.sendMessage(
+                "📤 SARS data export prepared for submission",
+                "compliance",
+                "normal"
+            );
+        }
+
+        function generateSARSReport() {
+            const report = {
+                period: new Date().toLocaleDateString(),
+                totalReports: document.getElementById('totalSARSReports').textContent,
+                highRiskStores: document.getElementById('highRiskStores').textContent,
+                generatedAt: new Date().toISOString()
+            };
+            
+            alert(`📊 SARS Intelligence Report Generated!\n\nPeriod: ${report.period}\nTotal Reports: ${report.totalReports}\nHigh-Risk Stores: ${report.highRiskStores}\n\nReport ready for compliance officers.`);
+        }
+
+        // ===== DASHBOARD DATA MANAGEMENT =====
+        function loadDashboardData() {
+            const networkData = getNetworkData();
+            
+            document.getElementById('totalProducts').textContent = networkData.products.length;
+            document.getElementById('activeAlerts').textContent = networkData.alerts.length;
+            document.getElementById('sarsReports').textContent = networkData.sarsReports.length;
+            document.getElementById('totalSARSReports').textContent = networkData.sarsReports.length;
+            document.getElementById('highRiskStores').textContent = calculateHighRiskStores(networkData.sarsReports);
+
+            updateProductsTable();
+            updateSARSReportsTable();
+            updateRecentActivity(networkData.recentActivity);
+        }
+
+        function getNetworkData() {
+            const consumerAlerts = JSON.parse(localStorage.getItem('safesource-alerts')) || [];
+            const consumerVerifications = JSON.parse(localStorage.getItem('verification-history')) || [];
+            const platformProducts = JSON.parse(localStorage.getItem('platform-products')) || [];
+            
+            return {
+                products: platformProducts,
+                alerts: consumerAlerts,
+                sarsReports: consumerAlerts.filter(alert => alert.type === 'sars_report'),
+                supplyNodes: ['Farm A', 'Manufacturer B', 'Distributor C', 'Retailer D'],
+                recentActivity: consumerVerifications.slice(0, 10)
+            };
+        }
+
+        function calculateHighRiskStores(sarsReports) {
+            const storeCounts = {};
+            sarsReports.forEach(report => {
+                const store = report.store || 'Unknown';
+                storeCounts[store] = (storeCounts[store] || 0) + 1;
+            });
+            
+            return Object.values(storeCounts).filter(count => count >= 2).length;
+        }
+
+        function updateRecentActivity(activities) {
+            const container = document.getElementById('recentActivity');
+            const recentActivities = activities || getNetworkData().recentActivity;
+
+            if (recentActivities.length === 0) {
+                container.innerHTML = '<div style="text-align: center; opacity: 0.7; padding: 20px;">No recent activity</div>';
+                return;
+            }
+
+            container.innerHTML = recentActivities.map(activity => `
+                <div style="padding: 10px; border-bottom: 1px solid rgba(0, 168, 255, 0.3);">
+                    <strong>${activity.productCode || 'System Activity'}</strong><br>
+                    <small>${activity.verified ? '✅ Verified' : '❌ Failed'} • ${timeAgo(new Date(activity.timestamp))}</small>
+                </div>
+            `).join('');
+        }
+
+        // ===== CHART INITIALIZATION =====
+        function initializeCharts() {
+            // Verification Trends Chart
+            const verificationCtx = document.getElementById('verificationChart').getContext('2d');
+            new Chart(verificationCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [{
+                        label: 'Successful Verifications',
+                        data: [65, 78, 90, 81, 86, 94],
+                        borderColor: '#00ff00',
+                        backgroundColor: 'rgba(0, 255, 0, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: 'Failed Verifications',
+                        data: [12, 8, 5, 9, 7, 3],
+                        borderColor: '#ff4444',
+                        backgroundColor: 'rgba(255, 68, 68, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#00a8ff' } }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: true,
+                            ticks: { color: '#00a8ff' },
+                            grid: { color: 'rgba(0, 168, 255, 0.1)' }
+                        },
+                        x: {
+                            ticks: { color: '#00a8ff' },
+                            grid: { color: 'rgba(0, 168, 255, 0.1)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ===== UTILITY FUNCTIONS =====
+        function timeAgo(date) {
+            const seconds = Math.floor((new Date() - date) / 1000);
+            if (seconds < 60) return 'Just now';
+            const minutes = Math.floor(seconds / 60);
+            if (minutes < 60) return `${minutes}m ago`;
+            const hours = Math.floor(minutes / 60);
+            if (hours < 24) return `${hours}h ago`;
+            const days = Math.floor(hours / 24);
+            return `${days}d ago`;
+        }
+
+        function viewProduct(productId) {
+            alert(`Viewing product: ${productId}\n\nIn production, this would show detailed product analytics and journey visualization.`);
+        }
+
+        function deleteProduct(productId) {
+            if (confirm('Are you sure you want to delete this product?')) {
+                let products = JSON.parse(localStorage.getItem('platform-products')) || [];
+                products = products.filter(p => p.id !== productId);
+                localStorage.setItem('platform-products', JSON.stringify(products));
+                updateProductsTable();
+                loadDashboardData();
+                
+                supplyChainChat.sendMessage(
+                    `🗑️ Product ${productId} deleted from system`,
+                    "all",
+                    "normal"
+                );
+            }
+        }
+
+        function generateQRCodes() {
+            const products = JSON.parse(localStorage.getItem('platform-products')) || [];
+            if (products.length === 0) {
+                alert('No products to generate QR codes for');
+                return;
+            }
+
+            alert(`QR codes generated for ${products.length} product batches!\n\nIn production, this would download printable QR code sheets and update product records.`);
+            
+            supplyChainChat.sendMessage(
+                `📄 QR codes generated for ${products.length} product batches`,
+                "manufacturing",
+                "normal"
+            );
+        }
+
+        // ===== REAL-TIME UPDATES =====
+        function startRealTimeUpdates() {
+            setInterval(() => {
+                loadDashboardData();
+                document.getElementById('blockchainBlocks').textContent = blockchainLogger.chain.length;
+            }, 10000);
+        }
+
+        function autoLogEvents() {
+            // Log system startup
+            journeyTracker.logEvent('SYSTEM', 'platform_startup', { 
+                version: '3.2',
+                features: ['chat', 'tracking', 'blockchain', 'sars']
+            });
+        }
+    </script>
+</body>
+</html>
